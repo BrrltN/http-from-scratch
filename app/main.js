@@ -1,7 +1,7 @@
 const net = require("net");
 
 const HTTP_RESPONSE = {
-    PARSE_ERROR: "Invalid HTTP request\r\n\r\n",
+    PARSE_ERROR: "HTTP/1.1 400 Invalid HTTP request\r\n\r\n",
     OK: "HTTP/1.1 200 OK\r\n\r\n",
     NOT_FOUND: "HTTP/1.1 404 NOT FOUND\r\n\r\n",
 }
@@ -31,8 +31,7 @@ function isAvailableMethod(method) {
  * @param { string | undefined } path 
  */
 function isAvailablePath(path) {
-    const regex = /^\/[a-zA-Z]*$|^\*$/;
-
+    const regex = /^\/*$|^\*$/;
     return regex.test(path)
 }
 
@@ -68,7 +67,7 @@ const server = net.createServer((socket) => {
             const lines = httpRequest.split("\r\n")
 
             if (lines.length === 0) {
-                socket.end(HTTP_RESPONSE.PARSE_ERROR);
+                return socket.end(HTTP_RESPONSE.PARSE_ERROR);
             }
 
             const startLine = lines[0]
@@ -76,7 +75,7 @@ const server = net.createServer((socket) => {
             const [method, path, httpVersion] = startLine.split(/\s+/);
 
             if (!isAvailableStartLine(method, path, httpVersion)) {
-                socket.end(HTTP_RESPONSE.PARSE_ERROR);
+                return socket.end(HTTP_RESPONSE.PARSE_ERROR);
             }
 
             if (path === "/") {
@@ -85,8 +84,12 @@ const server = net.createServer((socket) => {
             else {
                 socket.write(HTTP_RESPONSE.NOT_FOUND);
             }
-            socket.end();
         }
+        socket.end();
+    })
+
+    socket.on('error', () => {
+        socket.end(HTTP_RESPONSE.PARSE_ERROR);
     })
 });
 
