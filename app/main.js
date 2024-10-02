@@ -96,6 +96,7 @@ const server = net.createServer((socket) => {
         const clientRequestIsDone = httpRequest.endsWith("\r\n\r\n")
 
         if (clientRequestIsDone) {
+            console.log({ httpRequest })
             const response = handleHTTPRequest(httpRequest)
             socket.write(response)
         }
