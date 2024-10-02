@@ -2,7 +2,7 @@ const net = require("net")
 
 const HTTP_RESPONSE = {
     PARSE_ERROR: "HTTP/1.1 400 Invalid HTTP request\r\n\r\n",
-    OK: "HTTP/1.1 200 OK\r\n\r\n",
+    OK: "HTTP/1.1 200 OK\r\n",
     NOT_FOUND: "HTTP/1.1 404 Not Found\r\n\r\n",
 }
 
@@ -55,12 +55,32 @@ function isAvailableStartLine(method, path, httpVersion) {
 
 /**
  * 
- * @param { string } path 
- * @returns {  }
+ * @param { string } body
  */
-function getHTTPReponse(path) {
-    if (path === "/") {
-        return HTTP_RESPONSE.OK
+function getBodyByteLength(body) {
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(body);
+    return encoded.length;
+}
+
+/**
+ * 
+ * @param { string } path
+ */
+function getHTTPResponse(path) {
+    const isRoot = path === "/"
+    const isEcho = path.startsWith("/echo/")
+
+    if (isRoot) {
+        return HTTP_RESPONSE.OK + "\r\n"
+    }
+    else if (isEcho) {
+        const startLine = HTTP_RESPONSE.OK
+        const search = path.slice(6)
+        const contentType = "Content-Type: text/plain\r\n"
+        const contentLength = `Content-Length: ${getBodyByteLength(search)}\r\n`
+        const headers = `${contentType}${contentLength}`
+        return `${startLine}${headers}\r\n${search}`
     }
     else {
         return HTTP_RESPONSE.NOT_FOUND
@@ -82,7 +102,9 @@ function handleHTTPRequest(httpRequest) {
         return socket.end(HTTP_RESPONSE.PARSE_ERROR)
     }
 
-    const response = getHTTPReponse(path)
+    // Parser les headers pour les skip
+
+    const response = getHTTPResponse(path)
     return response
 }
 
@@ -98,6 +120,7 @@ const server = net.createServer((socket) => {
         if (clientRequestIsDone) {
             console.log({ httpRequest })
             const response = handleHTTPRequest(httpRequest)
+            console.log({ response })
             socket.write(response)
         }
         socket.end()
