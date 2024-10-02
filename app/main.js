@@ -1,9 +1,9 @@
-const net = require("net");
+const net = require("net")
 
 const HTTP_RESPONSE = {
     PARSE_ERROR: "HTTP/1.1 400 Invalid HTTP request\r\n\r\n",
     OK: "HTTP/1.1 200 OK\r\n\r\n",
-    NOT_FOUND: "HTTP/1.1 404 NOT FOUND\r\n\r\n",
+    NOT_FOUND: "HTTP/1.1 404 Not Found\r\n\r\n",
 }
 
 /**
@@ -13,8 +13,7 @@ const HTTP_RESPONSE = {
 function enableTimeout(socket, time = 3000) {
     socket.setTimeout(time)
     socket.on('timeout', () => {
-        console.log('request is timeout')
-        socket.end();
+        socket.end()
     })
 }
 
@@ -31,8 +30,7 @@ function isAvailableMethod(method) {
  * @param { string | undefined } path 
  */
 function isAvailablePath(path) {
-    const regex = /^\/*$|^\*$/;
-    return regex.test(path)
+    return path[0] === "*" || path[0] === "/"
 }
 
 /**
@@ -55,42 +53,58 @@ function isAvailableStartLine(method, path, httpVersion) {
         && isAvailableHttpVersion(httpVersion)
 }
 
-const server = net.createServer((socket) => {
-    enableTimeout(socket);
+/**
+ * 
+ * @param { string } path 
+ * @returns {  }
+ */
+function getHTTPReponse(path) {
+    if (path === "/") {
+        return HTTP_RESPONSE.OK
+    }
+    else {
+        return HTTP_RESPONSE.NOT_FOUND
+    }
+}
 
-    let httpRequest = "";
+function handleHTTPRequest(httpRequest) {
+    const lines = httpRequest.split("\r\n")
+
+    if (lines.length === 0) {
+        return socket.end(HTTP_RESPONSE.PARSE_ERROR)
+    }
+
+    const startLine = lines[0]
+    const [method, path, httpVersion] = startLine.split(/\s+/)
+
+    const hasParseError = !isAvailableStartLine(method, path, httpVersion)
+    if (hasParseError) {
+        return socket.end(HTTP_RESPONSE.PARSE_ERROR)
+    }
+
+    const response = getHTTPReponse(path)
+    return response
+}
+
+const server = net.createServer((socket) => {
+    enableTimeout(socket)
+
+    let httpRequest = ""
 
     socket.on("data", (data) => {
         httpRequest += data.toString()
         const clientRequestIsDone = httpRequest.endsWith("\r\n\r\n")
+
         if (clientRequestIsDone) {
-            const lines = httpRequest.split("\r\n")
-
-            if (lines.length === 0) {
-                return socket.end(HTTP_RESPONSE.PARSE_ERROR);
-            }
-
-            const startLine = lines[0]
-
-            const [method, path, httpVersion] = startLine.split(/\s+/);
-
-            if (!isAvailableStartLine(method, path, httpVersion)) {
-                return socket.end(HTTP_RESPONSE.PARSE_ERROR);
-            }
-
-            if (path === "/") {
-                socket.write(HTTP_RESPONSE.OK);
-            }
-            else {
-                socket.write(HTTP_RESPONSE.NOT_FOUND);
-            }
+            const response = handleHTTPRequest(httpRequest)
+            socket.write(response)
         }
-        socket.end();
+        socket.end()
     })
 
     socket.on('error', () => {
-        socket.end(HTTP_RESPONSE.PARSE_ERROR);
+        socket.end(HTTP_RESPONSE.PARSE_ERROR)
     })
-});
+})
 
-server.listen(4221, "localhost");
+server.listen(4221, "localhost")
