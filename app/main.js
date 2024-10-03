@@ -1,4 +1,6 @@
-const net = require("net")
+const net = require("node:net")
+const fs = require('node:fs')
+
 
 const HTTP_RESPONSE = {
     PARSE_ERROR: "HTTP/1.1 400 Invalid HTTP request\r\n\r\n",
@@ -65,26 +67,28 @@ function getBodyByteLength(body) {
 
 /**
  * 
- * @param { string } path
+ * @param { string } requestURI
  * @param { Map<string, string> } headers
  */
-function getHTTPResponse(path, requestHeaders) {
-    const isRoot = path === "/"
-    const isEcho = path.startsWith("/echo/")
-    const isUserAgent = path.startsWith("/user-agent")
+function getHTTPResponse(requestURI, requestHeaders) {
+    const isRoot = requestURI === "/"
+    const isEcho = requestURI.startsWith("/echo/")
+    const isUserAgent = requestURI.startsWith("/user-agent")
+    const isFiles = requestURI.startsWith("/files/")
 
     if (isRoot) {
         return HTTP_RESPONSE.OK + "\r\n"
     }
-    else if (isEcho) {
+    if (isEcho) {
         const startLine = HTTP_RESPONSE.OK
-        const search = path.slice(6)
+        const search = requestURI.slice(6)
         const contentType = "Content-Type: text/plain\r\n"
         const contentLength = `Content-Length: ${getBodyByteLength(search)}\r\n`
         const headers = `${contentType}${contentLength}`
         return `${startLine}${headers}\r\n${search}`
     }
-    else if (isUserAgent) {
+
+    if (isUserAgent) {
         const startLine = HTTP_RESPONSE.OK
         const contentType = "Content-Type: text/plain\r\n"
         const userAgent = requestHeaders.get('User-Agent') || "No User-Agent"
@@ -92,9 +96,26 @@ function getHTTPResponse(path, requestHeaders) {
         const responseHeaders = `${contentType}${contentLength}`
         return `${startLine}${responseHeaders}\r\n${userAgent}`
     }
-    else {
-        return HTTP_RESPONSE.NOT_FOUND
+
+    if (isFiles) {
+        const filename = requestURI.slice(7)
+        const directory = process.argv[3];
+        console.log({ argv: process.argv })
+        const pathToFile = `${directory}${filename}`;
+
+        const hasRegisteredFile = fs.existsSync(pathToFile)
+
+        if (hasRegisteredFile) {
+            const fileContent = fs.readFileSync(pathToFile, 'utf8');
+            console.log(fileContent);
+            const startLine = HTTP_RESPONSE.OK
+            const contentType = "Content-Type: application/octet-stream\r\n"
+            const contentLength = `Content-Length: ${getBodyByteLength(fileContent)}\r\n`
+            const responseHeaders = `${contentType}${contentLength}`
+            return `${startLine}${responseHeaders}\r\n${fileContent}`
+        }
     }
+    return HTTP_RESPONSE.NOT_FOUND
 }
 
 function handleHTTPRequest(httpRequest) {
