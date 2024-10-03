@@ -66,10 +66,12 @@ function getBodyByteLength(body) {
 /**
  * 
  * @param { string } path
+ * @param { Map<string, string> } headers
  */
-function getHTTPResponse(path) {
+function getHTTPResponse(path, requestHeaders) {
     const isRoot = path === "/"
     const isEcho = path.startsWith("/echo/")
+    const isUserAgent = path.startsWith("/user-agent")
 
     if (isRoot) {
         return HTTP_RESPONSE.OK + "\r\n"
@@ -81,6 +83,14 @@ function getHTTPResponse(path) {
         const contentLength = `Content-Length: ${getBodyByteLength(search)}\r\n`
         const headers = `${contentType}${contentLength}`
         return `${startLine}${headers}\r\n${search}`
+    }
+    else if (isUserAgent) {
+        const startLine = HTTP_RESPONSE.OK
+        const contentType = "Content-Type: text/plain\r\n"
+        const userAgent = requestHeaders.get('User-Agent') || "No User-Agent"
+        const contentLength = `Content-Length: ${getBodyByteLength(userAgent)}\r\n`
+        const responseHeaders = `${contentType}${contentLength}`
+        return `${startLine}${responseHeaders}\r\n${userAgent}`
     }
     else {
         return HTTP_RESPONSE.NOT_FOUND
@@ -102,9 +112,21 @@ function handleHTTPRequest(httpRequest) {
         return socket.end(HTTP_RESPONSE.PARSE_ERROR)
     }
 
-    // Parser les headers pour les skip
+    const endHeaderIndex = lines.findIndex(line => line === "")
 
-    const response = getHTTPResponse(path)
+    const rawHeaderLines = lines.slice(1, endHeaderIndex)
+
+    const headers = new Map()
+    for (const header of rawHeaderLines) {
+        let [key, value] = header.split(':')
+        const regex = /^\s/
+        if (regex.test(value)) {
+            value = value.slice(1)
+        }
+        headers.set(key, value)
+    }
+
+    const response = getHTTPResponse(path, headers)
     return response
 }
 
@@ -118,9 +140,7 @@ const server = net.createServer((socket) => {
         const clientRequestIsDone = httpRequest.endsWith("\r\n\r\n")
 
         if (clientRequestIsDone) {
-            console.log({ httpRequest })
             const response = handleHTTPRequest(httpRequest)
-            console.log({ response })
             socket.write(response)
         }
         socket.end()
