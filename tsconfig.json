@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "NodeNext",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "NodeNext",
+        "allowSyntheticDefaultImports": true,
+        "outDir": "./dist",
+        "rootDir": "./app",
+    },
+    "include": [
+        "app"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
