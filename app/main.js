@@ -356,11 +356,21 @@ function parseRawAcceptHeader(key, value) {
   return { key: "accept", value: acceptedMedias };
 }
 function parseRawAcceptEncoding(key, value) {
-  const isAcceptEncoding = value === "gzip";
-  if (key !== "Accept-Encoding" || !isAcceptEncoding) {
+  if (key !== "Accept-Encoding") {
     return null;
   }
-  return { key: "acceptEncoding", value };
+  const encodingValues = value.trim().split(",");
+  const availableEncodings = [];
+  for (const encodingValue of encodingValues) {
+    const isAvailable = encodingValue === "gzip";
+    if (isAvailable) {
+      availableEncodings.push(encodingValue);
+    }
+  }
+  if (!availableEncodings[0]) {
+    return null;
+  }
+  return { key: "acceptEncoding", value: availableEncodings[0] };
 }
 function parseHeaders(partialRawRequest) {
   const lines = partialRawRequest.split("\r\n");

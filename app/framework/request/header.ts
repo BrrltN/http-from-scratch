@@ -56,7 +56,6 @@ function parseRawHost(key: string, value: string): HostHeader | null {
     return { key: "host", value }
 }
 
-
 function parseRawAcceptHeader(key: string, value: string): AcceptHeader | null {
     if (key !== "Accept") {
         return null
@@ -81,12 +80,24 @@ function parseRawAcceptHeader(key: string, value: string): AcceptHeader | null {
 }
 
 function parseRawAcceptEncoding(key: string, value: string): AcceptEncodingHeader | null {
-    const isAcceptEncoding = value === "gzip"
-    if (key !== "Accept-Encoding" || !isAcceptEncoding) {
+    if (key !== "Accept-Encoding") {
+        return null
+    }
+    // Split pour choper toutes les valeurs
+    const encodingValues = value.trim().split(',')
+
+    const availableEncodings: AcceptEncodingHeader['value'][] = []
+    for (const encodingValue of encodingValues) {
+        const isAvailable = encodingValue === "gzip"
+        if (isAvailable) {
+            availableEncodings.push(encodingValue)
+        }
+    }
+    if (!availableEncodings[0]) {
         return null
     }
 
-    return { key: "acceptEncoding", value }
+    return { key: "acceptEncoding", value: availableEncodings[0] }
 }
 
 type SuccessParseHeaders = { headers: TypedHeaderMap, error: null }
