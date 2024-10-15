@@ -41,13 +41,15 @@ export async function handleRequest(httpRequest: string): Promise<string | null>
     // Concevoir une réponse par défaut
     const builder = new ResponseBuidler()
 
-    // builder.setContentType('text/plain')
-
     if (request.method === "GET") {
         builder.setStatus(200, "OK")
     }
     if (request.method === "POST") {
         builder.setStatus(201, "Created")
+    }
+    const requiredEncoding = request.headers.get('acceptEncoding')
+    if (requiredEncoding) {
+        builder.setContentEncoding(requiredEncoding)
     }
 
 

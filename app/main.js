@@ -31,11 +31,12 @@ var ResponseBuidler = class {
   #startline = null;
   #contentType = null;
   #contentLength = null;
+  #contentEncoding = null;
   #host = null;
   #userAgent = null;
   #body = null;
   #headers() {
-    return [this.#startline, this.#contentType, this.#contentLength, this.#userAgent, this.#host];
+    return [this.#startline, this.#contentType, this.#contentLength, this.#contentEncoding, this.#userAgent, this.#host];
   }
   #setContentLength() {
     if (!this.#body || this.#body.length === 0) {
@@ -59,6 +60,10 @@ var ResponseBuidler = class {
   }
   setHost(host) {
     this.#host = `Host: ${host}`;
+    return this;
+  }
+  setContentEncoding(contentEncoding) {
+    this.#contentEncoding = `Content-Encoding: ${contentEncoding}`;
     return this;
   }
   setBody(data) {
@@ -350,6 +355,13 @@ function parseRawAcceptHeader(key, value) {
   acceptedMedias.sort((a, b) => b.priority - a.priority);
   return { key: "accept", value: acceptedMedias };
 }
+function parseRawAcceptEncoding(key, value) {
+  const isAcceptEncoding = value === "gzip";
+  if (key !== "Accept-Encoding" || !isAcceptEncoding) {
+    return null;
+  }
+  return { key: "acceptEncoding", value };
+}
 function parseHeaders(partialRawRequest) {
   const lines = partialRawRequest.split("\r\n");
   const endHeaderIndex = lines.findIndex((line) => line === "");
@@ -379,6 +391,10 @@ function parseHeaders(partialRawRequest) {
     const accept = parseRawAcceptHeader(key, value);
     if (accept) {
       headers.set(accept.key, accept.value);
+    }
+    const acceptEncoding = parseRawAcceptEncoding(key, value);
+    if (acceptEncoding) {
+      headers.set(acceptEncoding.key, acceptEncoding.value);
     }
     const host = parseRawHost(key, value);
     if (host) {
@@ -437,7 +453,6 @@ function parseResquest(partialRawRequest) {
 
 // app/domain/domain.ts
 var import_promises = require("fs/promises");
-var fs = require("node:fs/promises");
 async function checkFile(pathToFile) {
   try {
     await (0, import_promises.access)(pathToFile);
@@ -523,6 +538,10 @@ async function handleRequest(httpRequest) {
   }
   if (request.method === "POST") {
     builder.setStatus(201, "Created");
+  }
+  const requiredEncoding = request.headers.get("acceptEncoding");
+  if (requiredEncoding) {
+    builder.setContentEncoding(requiredEncoding);
   }
   const context = { request, response: builder };
   await parsedHandler.handler(context);

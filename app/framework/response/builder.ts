@@ -1,5 +1,5 @@
 
-import type { ContentTypeHeader, HostHeader, UserAgentHeader } from "../type"
+import type { AcceptEncodingHeader, ContentTypeHeader, HostHeader, UserAgentHeader } from "../type"
 
 type SuccessBuild = { response: string, error: null }
 type FailBuild = { response: null; error: string }
@@ -9,12 +9,13 @@ export class ResponseBuidler {
     #startline: string | null = null
     #contentType: string | null = null
     #contentLength: string | null = null
+    #contentEncoding: string | null = null
     #host: string | null = null
     #userAgent: string | null = null
     #body: string | null = null
 
     #headers() {
-        return [this.#startline, this.#contentType, this.#contentLength, this.#userAgent, this.#host]
+        return [this.#startline, this.#contentType, this.#contentLength, this.#contentEncoding, this.#userAgent, this.#host]
     }
     #setContentLength() {
         if (!this.#body || this.#body.length === 0) {
@@ -40,6 +41,10 @@ export class ResponseBuidler {
     }
     setHost(host: HostHeader['value']) {
         this.#host = `Host: ${host}`
+        return this
+    }
+    setContentEncoding(contentEncoding: AcceptEncodingHeader['value']) {
+        this.#contentEncoding = `Content-Encoding: ${contentEncoding}`
         return this
     }
     setBody(data: string) {

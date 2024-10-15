@@ -1,4 +1,4 @@
-import type { AcceptHeader, ContentLengthHeader, ContentTypeHeader, HostHeader, MediaTypePreference, REQUEST_ERROR, UserAgentHeader } from "../type"
+import type { AcceptEncodingHeader, AcceptHeader, ContentLengthHeader, ContentTypeHeader, HostHeader, MediaTypePreference, REQUEST_ERROR, UserAgentHeader } from "../type"
 
 import { REQUEST_ERRORS } from "../error"
 import { TypedHeaderMap } from "../type"
@@ -80,6 +80,15 @@ function parseRawAcceptHeader(key: string, value: string): AcceptHeader | null {
     return { key: "accept", value: acceptedMedias }
 }
 
+function parseRawAcceptEncoding(key: string, value: string): AcceptEncodingHeader | null {
+    const isAcceptEncoding = value === "gzip"
+    if (key !== "Accept-Encoding" || !isAcceptEncoding) {
+        return null
+    }
+
+    return { key: "acceptEncoding", value }
+}
+
 type SuccessParseHeaders = { headers: TypedHeaderMap, error: null }
 type FailParseHeaders = { headers: null; error: REQUEST_ERROR }
 export function parseHeaders(partialRawRequest: string): SuccessParseHeaders | FailParseHeaders {
@@ -120,6 +129,11 @@ export function parseHeaders(partialRawRequest: string): SuccessParseHeaders | F
         const accept = parseRawAcceptHeader(key, value)
         if (accept) {
             headers.set(accept.key, accept.value)
+        }
+
+        const acceptEncoding = parseRawAcceptEncoding(key, value)
+        if (acceptEncoding) {
+            headers.set(acceptEncoding.key, acceptEncoding.value)
         }
 
         const host = parseRawHost(key, value)

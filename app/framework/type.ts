@@ -17,8 +17,10 @@ export type ContentTypeHeader = { key: "contentType", value: "text/plain" | "app
 export type UserAgentHeader = { key: "userAgent", value: string }
 export type AcceptHeader = { key: "accept", value: MediaTypePreference[] }
 export type HostHeader = { key: "host", value: string }
+export type AcceptEncodingHeader = { key: "acceptEncoding", value: 'gzip' }
 
 type Header = ContentLengthHeader
+    | AcceptEncodingHeader
     | ContentTypeHeader
     | UserAgentHeader
     | AcceptHeader
