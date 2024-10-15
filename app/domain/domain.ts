@@ -13,9 +13,8 @@ async function checkFile(pathToFile: string) {
 }
 
 export async function index({ request, response }: Context) {
-    response
-        .setContentType('text/plain')
-        .setBody("Hello World")
+    response.setContentType('text/plain')
+    await response.setBody("Hello World")
 }
 
 export async function echoRoute({ request, response }: Context) {
@@ -24,16 +23,14 @@ export async function echoRoute({ request, response }: Context) {
         return
     }
 
-    response
-        .setContentType('text/plain')
-        .setBody(search)
+    response.setContentType('text/plain')
+    await response.setBody(search)
 }
 
 export async function echoUserAgent({ request, response }: Context) {
     const userAgent = request.headers.get('userAgent') || "No User-Agent"
-    response
-        .setContentType('text/plain')
-        .setBody(userAgent)
+    response.setContentType('text/plain')
+    await response.setBody(userAgent)
 }
 
 export async function readFileIfExist({ request, response }: Context) {
@@ -52,7 +49,7 @@ export async function readFileIfExist({ request, response }: Context) {
     const fileContent = await readFile(pathToFile, 'utf8')
 
     response.setContentType('application/octet-stream')
-        .setBody(fileContent)
+    await response.setBody(fileContent)
 }
 
 export async function registerFile({ request, response }: Context) {

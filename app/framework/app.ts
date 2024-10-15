@@ -15,7 +15,7 @@ function getRouteHandler(request: Request) {
     return router.getHandler(method, path)
 }
 
-export async function handleRequest(httpRequest: string): Promise<string | null> {
+export async function handleRequest(httpRequest: string): Promise<string | Buffer | null> {
 
     // Parser la requête : method, URI, headers, body ++ queryParmeter
     const { request, error: requestParseError } = parseResquest(httpRequest)

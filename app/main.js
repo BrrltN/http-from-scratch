@@ -26,6 +26,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var import_node_net = __toESM(require("node:net"));
 
 // app/framework/response/builder.ts
+var import_node_zlib = __toESM(require("node:zlib"));
+var import_node_util = require("node:util");
+var gzip = (0, import_node_util.promisify)(import_node_zlib.default.gzip);
 var ResponseBuidler = class {
   #separator = "\r\n";
   #startline = null;
@@ -42,9 +45,15 @@ var ResponseBuidler = class {
     if (!this.#body || this.#body.length === 0) {
       return;
     }
-    const encoder = new TextEncoder();
-    const encoded = encoder.encode(this.#body);
-    this.#contentLength = `Content-Length: ${encoded.length.toString()}`;
+    let contentLength = "0";
+    if (Buffer.isBuffer(this.#body)) {
+      contentLength = this.#body.byteLength.toString();
+    } else {
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(this.#body.toString());
+      contentLength = encoded.length.toString();
+    }
+    this.#contentLength = `Content-Length: ${contentLength}`;
   }
   setStatus(code, description) {
     this.#startline = `HTTP/1.1 ${code} ${description}`;
@@ -66,8 +75,13 @@ var ResponseBuidler = class {
     this.#contentEncoding = `Content-Encoding: ${contentEncoding}`;
     return this;
   }
-  setBody(data) {
-    this.#body = data;
+  async setBody(data) {
+    if (this.#contentEncoding !== null) {
+      const compressedBody = await gzip(data);
+      this.#body = compressedBody;
+    } else {
+      this.#body = data;
+    }
     this.#setContentLength();
     return this;
   }
@@ -84,8 +98,11 @@ var ResponseBuidler = class {
       }
     }
     const parsedHeaders = this.#headers().filter((item) => !!item).join(this.#separator) + this.#separator;
-    const response2 = parsedHeaders + this.#separator + (this.#body || "");
-    return { response: response2, error: null };
+    const response2 = parsedHeaders + this.#separator;
+    if (Buffer.isBuffer(this.#body)) {
+      return { response: Buffer.concat([Buffer.from(response2), this.#body]), error: null };
+    }
+    return { response: response2 + (this.#body || ""), error: null };
   }
 };
 var response = new ResponseBuidler();
@@ -472,18 +489,21 @@ async function checkFile(pathToFile) {
   }
 }
 async function index({ request, response: response2 }) {
-  response2.setContentType("text/plain").setBody("Hello World");
+  response2.setContentType("text/plain");
+  await response2.setBody("Hello World");
 }
 async function echoRoute({ request, response: response2 }) {
   const search = request.params.label;
   if (search === void 0) {
     return;
   }
-  response2.setContentType("text/plain").setBody(search);
+  response2.setContentType("text/plain");
+  await response2.setBody(search);
 }
 async function echoUserAgent({ request, response: response2 }) {
   const userAgent = request.headers.get("userAgent") || "No User-Agent";
-  response2.setContentType("text/plain").setBody(userAgent);
+  response2.setContentType("text/plain");
+  await response2.setBody(userAgent);
 }
 async function readFileIfExist({ request, response: response2 }) {
   const filename = request.params.filename;
@@ -497,7 +517,8 @@ async function readFileIfExist({ request, response: response2 }) {
     return response2.setStatus(404, "Not Found");
   }
   const fileContent = await (0, import_promises.readFile)(pathToFile, "utf8");
-  response2.setContentType("application/octet-stream").setBody(fileContent);
+  response2.setContentType("application/octet-stream");
+  await response2.setBody(fileContent);
 }
 async function registerFile({ request, response: response2 }) {
   const filename = request.params.filename;

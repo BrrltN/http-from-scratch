@@ -1,7 +1,11 @@
+import zlib from "node:zlib"
+import { promisify } from "node:util"
 
 import type { AcceptEncodingHeader, ContentTypeHeader, HostHeader, UserAgentHeader } from "../type"
 
-type SuccessBuild = { response: string, error: null }
+const gzip = promisify(zlib.gzip)
+
+type SuccessBuild = { response: string | Buffer, error: null }
 type FailBuild = { response: null; error: string }
 
 export class ResponseBuidler {
@@ -12,7 +16,7 @@ export class ResponseBuidler {
     #contentEncoding: string | null = null
     #host: string | null = null
     #userAgent: string | null = null
-    #body: string | null = null
+    #body: string | Buffer | null = null
 
     #headers() {
         return [this.#startline, this.#contentType, this.#contentLength, this.#contentEncoding, this.#userAgent, this.#host]
@@ -21,9 +25,16 @@ export class ResponseBuidler {
         if (!this.#body || this.#body.length === 0) {
             return
         }
-        const encoder = new TextEncoder()
-        const encoded = encoder.encode(this.#body)
-        this.#contentLength = `Content-Length: ${encoded.length.toString()}`
+        let contentLength = "0"
+        if (Buffer.isBuffer(this.#body)) {
+            contentLength = this.#body.byteLength.toString()
+        }
+        else {
+            const encoder = new TextEncoder()
+            const encoded = encoder.encode(this.#body.toString())
+            contentLength = encoded.length.toString()
+        }
+        this.#contentLength = `Content-Length: ${contentLength}`
     }
 
 
@@ -47,8 +58,14 @@ export class ResponseBuidler {
         this.#contentEncoding = `Content-Encoding: ${contentEncoding}`
         return this
     }
-    setBody(data: string) {
-        this.#body = data
+    async setBody(data: string) {
+        if (this.#contentEncoding !== null) {
+            const compressedBody = await gzip(data)
+            this.#body = compressedBody
+        }
+        else {
+            this.#body = data
+        }
         this.#setContentLength()
         return this
     }
@@ -70,9 +87,11 @@ export class ResponseBuidler {
             .filter(item => !!item)
             .join(this.#separator) + this.#separator
 
-        const response = parsedHeaders + this.#separator + (this.#body || '')
-
-        return { response, error: null }
+        const response = parsedHeaders + this.#separator
+        if (Buffer.isBuffer(this.#body)) {
+            return { response: Buffer.concat([Buffer.from(response), this.#body]), error: null }
+        }
+        return { response: response + (this.#body || ''), error: null }
     }
 
 
