@@ -64,8 +64,6 @@ export async function handleRequest(httpRequest: string): Promise<string | null>
         return parseError(error)
     }
 
-    console.log({ response })
-
     // Envoyer la réponse sous forme de string
     return response
 }

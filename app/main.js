@@ -104,7 +104,6 @@ function timeout() {
 function notFound() {
   const builder = new ResponseBuidler();
   const { response: response2, error } = builder.setStatus(404, "Not Found").build();
-  console.log({ builder, notFound: response2 });
   return error === null ? response2 : error;
 }
 
@@ -359,12 +358,13 @@ function parseRawAcceptEncoding(key, value) {
   if (key !== "Accept-Encoding") {
     return null;
   }
-  const encodingValues = value.trim().split(",");
+  const encodingValues = value.split(",");
   const availableEncodings = [];
   for (const encodingValue of encodingValues) {
-    const isAvailable = encodingValue === "gzip";
+    const trimedValue = encodingValue.trim();
+    const isAvailable = trimedValue === "gzip";
     if (isAvailable) {
-      availableEncodings.push(encodingValue);
+      availableEncodings.push(trimedValue);
     }
   }
   if (!availableEncodings[0]) {
@@ -510,7 +510,6 @@ async function registerFile({ request, response: response2 }) {
     return response2.setStatus(422, "Missing body");
   }
   const pathToFile = `${directory}${filename}`;
-  console.log({ content, pathToFile });
   await (0, import_promises.writeFile)(pathToFile, content);
 }
 
@@ -559,7 +558,6 @@ async function handleRequest(httpRequest) {
   if (error !== null) {
     return parseError(error);
   }
-  console.log({ response: response2 });
   return response2;
 }
 

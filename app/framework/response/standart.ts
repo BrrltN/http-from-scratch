@@ -16,7 +16,6 @@ export function timeout(): string {
 export function notFound(): string {
     const builder = new ResponseBuidler()
     const { response, error } = builder.setStatus(404, "Not Found").build()
-    console.log({ builder, notFound: response })
     return error === null ? response : error
 }
 

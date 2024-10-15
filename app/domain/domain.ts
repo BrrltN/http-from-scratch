@@ -68,7 +68,5 @@ export async function registerFile({ request, response }: Context) {
     }
 
     const pathToFile = `${directory}${filename}`
-    console.log({ content, pathToFile })
-
     await writeFile(pathToFile, content)
 }

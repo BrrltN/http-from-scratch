@@ -84,13 +84,14 @@ function parseRawAcceptEncoding(key: string, value: string): AcceptEncodingHeade
         return null
     }
     // Split pour choper toutes les valeurs
-    const encodingValues = value.trim().split(',')
+    const encodingValues = value.split(',')
 
     const availableEncodings: AcceptEncodingHeader['value'][] = []
     for (const encodingValue of encodingValues) {
-        const isAvailable = encodingValue === "gzip"
+        const trimedValue = encodingValue.trim()
+        const isAvailable = trimedValue === "gzip"
         if (isAvailable) {
-            availableEncodings.push(encodingValue)
+            availableEncodings.push(trimedValue)
         }
     }
     if (!availableEncodings[0]) {
