@@ -1,7 +1,7 @@
 import zlib from "node:zlib"
 import { promisify } from "node:util"
 
-import type { AcceptEncodingHeader, ContentTypeHeader, HostHeader, UserAgentHeader } from "../type"
+import type { AcceptEncodingHeader, ContentTypeHeader, HostHeader, Request, UserAgentHeader } from "../type"
 
 const gzip = promisify(zlib.gzip)
 
@@ -9,6 +9,20 @@ type SuccessBuild = { response: string | Buffer, error: null }
 type FailBuild = { response: null; error: string }
 
 export class ResponseBuidler {
+    constructor(request?: Request) {
+        if (request === undefined) {
+            return
+        }
+        this.#request = request
+
+        if (request.method === "GET") {
+            this.setStatus(200, "OK")
+        }
+        if (request.method === "POST") {
+            this.setStatus(201, "Created")
+        }
+    }
+    #request: Request | null = null
     #separator = "\r\n"
     #startline: string | null = null
     #contentType: string | null = null
@@ -54,11 +68,16 @@ export class ResponseBuidler {
         this.#host = `Host: ${host}`
         return this
     }
-    setContentEncoding(contentEncoding: AcceptEncodingHeader['value']) {
-        this.#contentEncoding = `Content-Encoding: ${contentEncoding}`
+    setContentEncoding() {
+        const requiredEncoding = this.#request !== null && this.#request.headers.get('acceptEncoding')
+        if (requiredEncoding) {
+            this.#contentEncoding = `Content-Encoding: ${requiredEncoding}`
+        }
         return this
     }
     async setBody(data: string) {
+        this.setContentEncoding()
+
         if (this.#contentEncoding !== null) {
             const compressedBody = await gzip(data)
             this.#body = compressedBody
@@ -66,6 +85,7 @@ export class ResponseBuidler {
         else {
             this.#body = data
         }
+
         this.#setContentLength()
         return this
     }
@@ -93,8 +113,4 @@ export class ResponseBuidler {
         }
         return { response: response + (this.#body || ''), error: null }
     }
-
-
 }
-
-const response = new ResponseBuidler()

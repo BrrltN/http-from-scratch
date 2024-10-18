@@ -13,7 +13,7 @@ export function parseBody(method: HTTP_METHOD, headers: TypedHeaderMap, partialR
     const contentType = headers.get("contentType")
     const contentLength = headers.get("contentLength")
 
-    if (!contentType || !contentLength) {
+    if (contentType === undefined || contentLength === undefined) {
         return { body: null, error: REQUEST_ERRORS.MISSING_BODY_HEADERS }
     }
 

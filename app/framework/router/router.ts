@@ -55,10 +55,14 @@ export class Router {
         const routeSegments = this.#getRouteSegments(path)
         let currentNode = methodTree
 
-        for (const [index, routeNode] of routeSegments.entries()) {
+        for (let [index, routeNode] of routeSegments.entries()) {
             const isLastNode = index === routeSegments.length - 1
 
             const isParam = routeNode.startsWith(":")
+
+            if (isParam) {
+                routeNode = routeNode.substring(1)
+            }
 
             function getNextNode(node: TreeNode, key: string): TreeNode | null {
                 const nextNode = node.get(key)
@@ -69,9 +73,6 @@ export class Router {
             }
             function createEmptyNodeAndAddItToCurrentNode(node: TreeNode, key: string): TreeNode {
                 const emptyNode: TreeNode = new Map()
-                if (key.startsWith(":")) {
-                    key = key.substring(1)
-                }
                 node.set(key, emptyNode)
                 return emptyNode
             }
@@ -91,6 +92,10 @@ export class Router {
             }
 
         }
+    }
+
+    reset(): void {
+        this.#routeTree = new Map()
     }
 
     getHandler(method: HTTP_METHOD, route: string): SuccessParsedHandler | FailParsedHandler {
@@ -136,9 +141,11 @@ export class Router {
             availableNodes = [...segmentAvailableNodes]
         }
 
-        if (availableNodes.length !== 1) {
-            return { parsedHandler: null, error: "Route match more than one handle" }
+        if (availableNodes.length === 0) {
+            return { parsedHandler: null, error: "Route don't have handler" }
         }
+
+        // Même si on match plusieurs routes on prends la première
         const availableNode = availableNodes[0]
         const handler = availableNode.node.get(this.#handlerKey)
         if (typeof handler !== "function") {
@@ -158,29 +165,3 @@ export class Router {
         this.#registerRoute('POST', path, handler)
     }
 }
-
-
-// const router = Router.getInstance()
-
-// router.get("/", () => "/")
-// router.get("/files/:id", () => "/files/:id")
-// router.get("/files/some_action", () => "/files/some_action")
-// router.get("/files/:label", () => "/files/:label")
-// router.get("/files/", () => "/files/")
-// router.get("/files/:id/:label", () => "/files/:id/:label")
-// router.get("/files/:id/some_action", () => "/files/:id/some_action")
-// router.get("/files/:id/some_action/:label", () => "/files/:id/some_action/:label")
-// router.get("/files/:id/some_action/otherAction", () => "/files/:id/some_action/otherAction")
-// router.get("/files/:id/some_action/otherAction/:label", () => "/files/:id/some_action/otherAction/:label")
-// router.post("/", () => "/")
-// router.post("/files", () => "/files")
-// router.post("/files/:id", () => "/files/:id")
-// router.post("/files/some_action", () => "/files/some_action")
-// router.post("/files/:label", () => "/files/:label")
-// router.post("/files/:id/:label", () => "/files/:id/:label")
-// router.post("/files/:id/some_action", () => "/files/:id/some_action")
-// router.post("/files/:id/some_action/:label", () => "/files/:id/some_action/:label")
-// router.post("/files/:id/some_action/otherAction", () => "/files/:id/some_action/otherAction")
-// router.post("/files/:id/some_action/otherAction/:label", () => "/files/:id/some_action/otherAction/:label")
-
-

@@ -6,13 +6,13 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "node",
+        "moduleResolution": "Bundler",
         "allowSyntheticDefaultImports": true,
-        "outDir": "./dist",
-        "rootDir": "./app",
     },
     "include": [
-        "app"
+        "app",
+        "test",
+        "config"
     ],
     "exclude": [
         "node_modules"

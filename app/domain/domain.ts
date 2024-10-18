@@ -1,14 +1,28 @@
 import type { Context } from "../framework/type"
 
-import { access, readFile, writeFile } from 'fs/promises'
+import { promises as fs } from 'fs'
+import { join } from 'path'
 
-
-async function checkFile(pathToFile: string) {
+async function checkFile(filePath: string) {
     try {
-        await access(pathToFile)
+        await fs.access(filePath)
         return true
     } catch (err) {
         return false
+    }
+}
+
+async function writeFile(filePath: string, data: string): Promise<void> {
+    try {
+        const directory = join(filePath, '..')
+        await fs.mkdir(directory, { recursive: true })
+        await fs.writeFile(filePath, data, 'utf8')
+    } catch (error) {
+        let message = "WRITE FILE ERROR"
+        if (typeof error === "object" && error && 'message' in error && error.message) {
+            message += error.message
+        }
+        throw new Error(message)
     }
 }
 
@@ -35,18 +49,18 @@ export async function echoUserAgent({ request, response }: Context) {
 
 export async function readFileIfExist({ request, response }: Context) {
     const filename = request.params.filename
-    const directory = process.argv[3]
+    const directory = process.argv[3] || `${process.cwd()}/files/`
     if (!filename || !directory) {
         return response.setStatus(500, "Internal error")
     }
 
-    const pathToFile = `${directory}${filename}`
-    const hasRegisteredFile = await checkFile(pathToFile)
+    const filePath = `${directory}${filename}`
+    const hasRegisteredFile = await checkFile(filePath)
     if (!hasRegisteredFile) {
         return response.setStatus(404, "Not Found")
     }
 
-    const fileContent = await readFile(pathToFile, 'utf8')
+    const fileContent = await fs.readFile(filePath, 'utf8')
 
     response.setContentType('application/octet-stream')
     await response.setBody(fileContent)
@@ -54,7 +68,7 @@ export async function readFileIfExist({ request, response }: Context) {
 
 export async function registerFile({ request, response }: Context) {
     const filename = request.params.filename
-    const directory = process.argv[3]
+    const directory = process.argv[3] || `${process.cwd()}/files/`
     if (!filename || !directory) {
         return response.setStatus(500, "Not Found")
     }
@@ -64,6 +78,6 @@ export async function registerFile({ request, response }: Context) {
         return response.setStatus(422, "Missing body")
     }
 
-    const pathToFile = `${directory}${filename}`
-    await writeFile(pathToFile, content)
+    const filePath = `${directory}${filename}`
+    await writeFile(filePath, content)
 }

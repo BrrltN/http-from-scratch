@@ -1,4 +1,4 @@
-import type { Context, Request } from "./type"
+import type { Request } from "./type"
 
 import { Router } from "./router/router"
 import { parseResquest } from "./request/request"
@@ -17,7 +17,6 @@ function getRouteHandler(request: Request) {
 
 export async function handleRequest(httpRequest: string): Promise<string | Buffer | null> {
 
-    // Parser la requête : method, URI, headers, body ++ queryParmeter
     const { request, error: requestParseError } = parseResquest(httpRequest)
 
     if (requestParseError !== null) {
@@ -27,38 +26,19 @@ export async function handleRequest(httpRequest: string): Promise<string | Buffe
             : null
     }
 
-    // Récupérer le handler + URL params
     const { parsedHandler, error: routeError } = getRouteHandler(request)
     if (routeError !== null) {
         return notFound()
     }
 
-    // Injecter les URL params dans la request
     if (parsedHandler.params) {
         request.params = parsedHandler.params
     }
 
-    // Concevoir une réponse par défaut
-    const builder = new ResponseBuidler()
+    const builder = new ResponseBuidler(request)
 
-    if (request.method === "GET") {
-        builder.setStatus(200, "OK")
-    }
-    if (request.method === "POST") {
-        builder.setStatus(201, "Created")
-    }
-    const requiredEncoding = request.headers.get('acceptEncoding')
-    if (requiredEncoding) {
-        builder.setContentEncoding(requiredEncoding)
-    }
+    await parsedHandler.handler({ request, response: builder })
 
-
-    // Construire un contexte ( req, res )
-    const context: Context = { request, response: builder }
-
-    await parsedHandler.handler(context)
-
-    // Build la réponse
     const { response, error } = builder.build()
     if (error !== null) {
         return parseError(error)

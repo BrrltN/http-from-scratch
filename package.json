@@ -1,21 +1,18 @@
 {
-    "name": "@codecrafters/build-your-own-http-server",
-    "version": "1.0.0",
-    "description": "Build your own HTTP-Server challenge, from CodeCrafters",
-    "main": "main.js",
-    "scripts": {
-        "dev": "bun app/main.js"
-    },
-    "keywords": [
-        "build-your-own-x"
-    ],
-    "author": "",
-    "license": "MIT",
-    "dependencies": {
-        "@types/node": "^22.7.4"
-    },
-    "devDependencies": {
-        "esbuild": "^0.24.0",
-        "typescript": "^5.6.3"
-    }
+  "name": "http-from-scratch",
+  "version": "1.0.0",
+  "description": "http-from-scratch",
+  "type": "module",
+  "scripts": {
+    "test": "bun config/test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "@japa/api-client": "^2.0.3",
+    "@japa/assert": "^3.0.0",
+    "@japa/expect-type": "^2.0.2",
+    "@japa/file-system": "^2.3.0",
+    "@japa/runner": "^3.1.4",
+    "typescript": "^5.6.3"
+  }
 }

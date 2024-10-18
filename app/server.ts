@@ -34,4 +34,16 @@ const server = net.createServer((socket) => {
     })
 })
 
-server.listen(4221, "localhost")
+export const SERVER_PORT = 4221
+export const SERVER_HOSTNAME = "localhost"
+
+export function start() {
+    server.listen(SERVER_PORT, SERVER_HOSTNAME)
+}
+
+export function close(onCloseCallback: Function | null = null) {
+    server.close()
+    if (onCloseCallback !== null) {
+        onCloseCallback()
+    }
+}

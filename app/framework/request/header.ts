@@ -11,7 +11,7 @@ function normalizeRawHeaderKeyValue(header: string) {
         return null
     }
 
-    const key = match[1]
+    const key = match[1].toLowerCase()
     let value = match[2]
 
     const beginWithSpaceRegex = /^\s/
@@ -23,7 +23,7 @@ function normalizeRawHeaderKeyValue(header: string) {
 
 function parseRawContentLength(key: string, value: string): ContentLengthHeader | null {
     const castedValue = Number(value.trim())
-    if (key !== "Content-Length" || !Number.isInteger(castedValue)) {
+    if (key !== "content-length" || !Number.isInteger(castedValue)) {
         return null
     }
     return { key: "contentLength", value: castedValue }
@@ -31,7 +31,7 @@ function parseRawContentLength(key: string, value: string): ContentLengthHeader 
 
 function parseRawContentType(key: string, value: string): ContentTypeHeader | null {
     const isAvailableContentType = value === "text/plain" || value === "application/octet-stream"
-    if (key !== "Content-Type" || !isAvailableContentType) {
+    if (key !== "content-type" || !isAvailableContentType) {
         return null
     }
 
@@ -40,7 +40,7 @@ function parseRawContentType(key: string, value: string): ContentTypeHeader | nu
 
 function parseRawUserAgent(key: string, value: string): UserAgentHeader | null {
     const isAvailableUserAgent = typeof value === "string"
-    if (key !== "User-Agent" || !isAvailableUserAgent) {
+    if (key !== "user-agent" || !isAvailableUserAgent) {
         return null
     }
 
@@ -49,7 +49,7 @@ function parseRawUserAgent(key: string, value: string): UserAgentHeader | null {
 
 function parseRawHost(key: string, value: string): HostHeader | null {
     const isAvailableHost = typeof value === "string"
-    if (key !== "Host" || !isAvailableHost) {
+    if (key !== "host" || !isAvailableHost) {
         return null
     }
 
@@ -57,7 +57,7 @@ function parseRawHost(key: string, value: string): HostHeader | null {
 }
 
 function parseRawAcceptHeader(key: string, value: string): AcceptHeader | null {
-    if (key !== "Accept") {
+    if (key !== "accept") {
         return null
     }
 
@@ -80,7 +80,7 @@ function parseRawAcceptHeader(key: string, value: string): AcceptHeader | null {
 }
 
 function parseRawAcceptEncoding(key: string, value: string): AcceptEncodingHeader | null {
-    if (key !== "Accept-Encoding") {
+    if (key !== "accept-encoding") {
         return null
     }
     // Split pour choper toutes les valeurs
@@ -117,6 +117,7 @@ export function parseHeaders(partialRawRequest: string): SuccessParseHeaders | F
     for (const header of rawHeaderLines) {
 
         const normalizedRawHeader = normalizeRawHeaderKeyValue(header)
+
         if (!normalizedRawHeader) {
             continue
         }
