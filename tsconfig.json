@@ -11,8 +11,7 @@
     },
     "include": [
         "app",
-        "test",
-        "config"
+        "config",
     ],
     "exclude": [
         "node_modules"

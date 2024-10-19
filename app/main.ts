@@ -1,6 +1,3 @@
-import { start, close } from "./server"
+import { start } from "./server"
 
 start()
-// close(() => {
-//     process.exit(0)
-// })

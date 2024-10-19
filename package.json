@@ -4,7 +4,8 @@
   "description": "http-from-scratch",
   "type": "module",
   "scripts": {
-    "test": "bun config/test.ts"
+    "test": "bun config/test.ts",
+    "serve": "bun app/main.ts"
   },
   "devDependencies": {
     "@types/node": "^22.7.4",

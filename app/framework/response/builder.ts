@@ -1,7 +1,7 @@
 import zlib from "node:zlib"
 import { promisify } from "node:util"
 
-import type { AcceptEncodingHeader, ContentTypeHeader, HostHeader, Request, UserAgentHeader } from "../type"
+import type { ContentTypeHeader, HostHeader, Request, UserAgentHeader } from "../type"
 
 const gzip = promisify(zlib.gzip)
 

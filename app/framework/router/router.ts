@@ -110,7 +110,7 @@ export class Router {
 
         for (const routeSegment of routeSegments) {
 
-            const segmentAvailableNodes = []
+            const segmentAvailableNodes: AvailableNode[] = []
 
             for (const currentNode of availableNodes) {
                 if (currentNode.node === null) {
